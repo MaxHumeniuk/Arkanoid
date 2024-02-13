@@ -5,8 +5,6 @@ x_paddle = 320
 y_paddle = 565
 speed = 5
 
-lines = 4
-columns = 11
 
 def init_game():
     pygame.init()
@@ -35,21 +33,23 @@ def moving_ball(x_ball, y_ball, ball_dx, ball_dy):
     y_ball += ball_dy
     return x_ball, y_ball
 
-def draw_bricks(screen, bricks, brick, lines, columns):
-    x_offset = 9
-    y_offset = 9
-    for line in range(lines):
-        for column in range(columns):
-            if bricks[line][column] == 1:
-                x_brick = column * (brick.get_width() + x_offset)
-                y_brick = line * (brick.get_height() + y_offset)
-                screen.blit(brick, (x_brick, y_brick))
+
+def draw_bricks(screen, bricks, brick_width, brick_height, x_ball, y_ball, ball_width, ball_height, ball_dx, ball_dy):
+    for brick in bricks:
+        if brick is not None:  
+            screen.blit(brick["image"], brick["rect"])
+            if brick["rect"].colliderect(pygame.Rect(x_ball, y_ball, ball_width, ball_height)):
+                bricks.remove(brick)
+                return True  
+    return False 
+
+
 
 def main():
     x_ball = 400
     y_ball = 300
     screen = init_game()
-    paddle, brick, ball = load_images()
+    paddle, brick_img, ball = load_images()
     play_background_sound()
 
     x_paddle = 320
@@ -59,22 +59,45 @@ def main():
     ball_dx = 2
     ball_dy = 2
 
+    brick_width = brick_img.get_width()
+    brick_height = brick_img.get_height()
+
+    bricks = [{"image": brick_img, "rect": pygame.Rect((brick_width * i) + 10, (brick_height * j) + 10, brick_width, brick_height)} for i in range(12) for j in range(4)]
+
+    score = 0  
+
     running = True
 
-    bricks = [[1 for _ in range(columns)] for _ in range(lines)]  
-
     while running:
-        screen.fill((227, 225, 225))
+        screen.fill("white")
 
+        
         draw_paddle(screen, paddle, x_paddle, y_paddle)
-        draw_bricks(screen, bricks, brick, lines, columns)
+        ball_hit_brick = draw_bricks(screen, bricks, brick_width, brick_height, x_ball, y_ball, ball.get_width(), ball.get_height(), ball_dx, ball_dy)
+        if ball_hit_brick:
+            ball_dy = -ball_dy
+            score += 5
+
         draw_ball(screen, ball, x_ball, y_ball)
+
+        font = pygame.font.Font(None, 36)
+        score_text = font.render("Score: " + str(score), True, "black")
+        screen.blit(score_text, (10, 500))
+
         pygame.display.update()
+
+        
+        if score >= 240:
+            win_text = font.render("You Win!!!!!!! ", True, "black")
+            screen.blit(win_text, (400, 300))
+            running = False
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-                pygame.quit()
+                pygame.quit() 
+        
+        pygame.display.update()
 
         moving_paddle = pygame.key.get_pressed()
 
@@ -101,20 +124,6 @@ def main():
         
         if y_ball + ball.get_height() >= y_paddle and x_ball + ball.get_width() >= x_paddle and x_ball <= x_paddle + paddle.get_width():
             ball_dy = -ball_dy
-
-        
-        brick_width = brick.get_width()
-        brick_height = brick.get_height()
-        for line in range(lines):
-            for column in range(columns):
-                if bricks[line][column] == 1:  
-                    x_brick = column * (brick_width + 9)
-                    y_brick = line * (brick_height + 9)
-                    brick_rect = pygame.Rect(x_brick, y_brick, brick_width, brick_height)
-                    if brick_rect.colliderect(ball.get_rect(left=x_ball, top=y_ball)):
-                        ball_dy = -ball_dy
-                        bricks[line][column] = 0
-                        break  
 
         x_ball, y_ball = moving_ball(x_ball, y_ball, ball_dx, ball_dy)
 
