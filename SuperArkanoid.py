@@ -1,11 +1,6 @@
 import pygame
 import random
 
-x_paddle = 320
-y_paddle = 565
-speed = 5
-
-
 def init_game():
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
@@ -62,11 +57,12 @@ def main():
     brick_width = brick_img.get_width()
     brick_height = brick_img.get_height()
 
-    bricks = [{"image": brick_img, "rect": pygame.Rect((brick_width * i) + 10, (brick_height * j) + 10, brick_width, brick_height)} for i in range(12) for j in range(4)]
+    bricks = [{"image": brick_img, "rect": pygame.Rect((brick_width * i) + 10, (brick_height * j) + 10, brick_width, brick_height)} for i in range(2) for j in range(2)]
 
     score = 0  
 
     running = True
+    active = True
 
     while running:
         screen.fill("white")
@@ -75,7 +71,7 @@ def main():
         draw_paddle(screen, paddle, x_paddle, y_paddle)
         ball_hit_brick = draw_bricks(screen, bricks, brick_width, brick_height, x_ball, y_ball, ball.get_width(), ball.get_height(), ball_dx, ball_dy)
         if ball_hit_brick:
-            ball_dy = -ball_dy
+            ball_dy = -ball_dy 
             score += 5
 
         draw_ball(screen, ball, x_ball, y_ball)
@@ -84,18 +80,41 @@ def main():
         score_text = font.render("Score: " + str(score), True, "black")
         screen.blit(score_text, (10, 500))
 
-        pygame.display.update()
+        if active == True:
+            pygame.display.update()
 
         
         if score >= 240:
             win_text = font.render("You Win!!!!!!! ", True, "black")
             screen.blit(win_text, (400, 300))
-            running = False
+            restart_button = pygame.key.get_pressed()
+            restart_text = font.render("Press ENTER to restart game", True, "black")
+            screen.blit(restart_text,(400, 400))
+            if restart_button[pygame.K_KP_ENTER]:
+                main()
+                win_text = False
+
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-                pygame.quit() 
+                pygame.quit()
+        
+        if active == False:
+            loose_text = font.render("You loose :(", True, "red")
+            screen.blit(loose_text, (400, 300))
+            restart_button = pygame.key.get_pressed()
+            restart_text = font.render("Press ENTER to restart game", True, "black")
+            screen.blit(restart_text, (400, 400))
+            pygame.display.update()
+            if restart_button[pygame.K_KP_ENTER]:
+                main()
+                loose_text = False
+        
+                
+        
+        
+            
         
         pygame.display.update()
 
@@ -119,7 +138,7 @@ def main():
         if y_ball <= 0:
             ball_dy = abs(ball_dy)
         elif y_ball >= 600 - ball.get_height():
-            running = False  
+            active = False  
 
         
         if y_ball + ball.get_height() >= y_paddle and x_ball + ball.get_width() >= x_paddle and x_ball <= x_paddle + paddle.get_width():
